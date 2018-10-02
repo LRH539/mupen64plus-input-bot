@@ -18,7 +18,10 @@
 #include "json_tokener.h"
 
 #define HOST "localhost"
-#define PORT 8082
+#define CONTROLLER_PORT1 8082
+#define CONTROLLER_PORT2 8083
+#define CONTROLLER_PORT3 8084
+#define CONTROLLER_PORT4 8085
 
 int socket_connect(char *host, int portno) {
     struct hostent *server;
@@ -45,39 +48,73 @@ int socket_connect(char *host, int portno) {
         return -1;
     }
 
+
     return sockfd;
 }
 
-void clear_controller() {
-    controller[0].buttons.R_DPAD = 0;
-    controller[0].buttons.L_DPAD = 0;
-    controller[0].buttons.D_DPAD = 0;
-    controller[0].buttons.U_DPAD = 0;
-    controller[0].buttons.START_BUTTON = 0;
-    controller[0].buttons.Z_TRIG = 0;
-    controller[0].buttons.B_BUTTON = 0;
-    controller[0].buttons.A_BUTTON = 0;
-    controller[0].buttons.R_CBUTTON = 0;
-    controller[0].buttons.L_CBUTTON = 0;
-    controller[0].buttons.D_CBUTTON = 0;
-    controller[0].buttons.U_CBUTTON = 0;
-    controller[0].buttons.R_TRIG = 0;
-    controller[0].buttons.L_TRIG = 0;
-    controller[0].buttons.X_AXIS = 0;
-    controller[0].buttons.Y_AXIS = 0;
+void clear_controller(Control) {
+    controller[Control].buttons.R_DPAD = 0;
+    controller[Control].buttons.L_DPAD = 0;
+    controller[Control].buttons.D_DPAD = 0;
+    controller[Control].buttons.U_DPAD = 0;
+    controller[Control].buttons.START_BUTTON = 0;
+    controller[Control].buttons.Z_TRIG = 0;
+    controller[Control].buttons.B_BUTTON = 0;
+    controller[Control].buttons.A_BUTTON = 0;
+    controller[Control].buttons.R_CBUTTON = 0;
+    controller[Control].buttons.L_CBUTTON = 0;
+    controller[Control].buttons.D_CBUTTON = 0;
+    controller[Control].buttons.U_CBUTTON = 0;
+    controller[Control].buttons.R_TRIG = 0;
+    controller[Control].buttons.L_TRIG = 0;
+    controller[Control].buttons.X_AXIS = 0;
+    controller[Control].buttons.Y_AXIS = 0;
 }
 
-void read_controller() {
-    int sockfd = socket_connect(HOST, PORT);
+void read_controller(int Control) {
+    int port;
+
+    // Depending on controller, select whether port 1 or port 2
+    switch (Control) {
+    case 0:
+      port = CONTROLLER_PORT1;
+      break;
+    case 1:
+      port = CONTROLLER_PORT2;
+      break;
+    case 2:
+      port = CONTROLLER_PORT3;
+      break;
+    case 3:
+      port = CONTROLLER_PORT4;
+      break;
+    default:
+      port = CONTROLLER_PORT1;
+    }
+
+    if(Control == 1){
+      // Ignore controller 1
+      // return;
+    }
+
+    // DebugMessage(M64MSG_INFO, "Controller #%d listening on port %d", Control, port );
+
+    int sockfd = socket_connect(HOST, port);
 
     if (sockfd == -1) {
-        clear_controller();
+        clear_controller(Control);
         return;
     }
 
     int bytes, sent, received, total;
     char message[1024], response[4096]; // allocate more space than required.
     sprintf(message, "GET / HTTP/1.0\r\n\r\n");
+
+    /* print the request */
+    #ifdef _DEBUG
+        DebugMessage(M64MSG_INFO, "[REQUEST] PORT %d: %s", port, message);
+    #endif
+
 
     /* send the request */
     total = strlen(message);
@@ -109,7 +146,7 @@ void read_controller() {
 
 /* print the response */
 #ifdef _DEBUG
-    DebugMessage(M64MSG_INFO, response);
+    DebugMessage(M64MSG_INFO, "[RESPONSE] PORT %d: %s", port, response);
 #endif
 
     /* parse the http response */
@@ -119,43 +156,43 @@ void read_controller() {
 
     /* parse the body of the response */
     json_object *jsonObj = json_tokener_parse(body);
-    
+
 /* print the object */
 #ifdef _DEBUG
     DebugMessage(M64MSG_INFO, json_object_to_json_string(jsonObj));
 #endif
 
-    controller[0].buttons.R_DPAD = 
+    controller[Control].buttons.R_DPAD =
         json_object_get_int(json_object_object_get(jsonObj, "R_DPAD"));
-    controller[0].buttons.L_DPAD = 
+    controller[Control].buttons.L_DPAD =
         json_object_get_int(json_object_object_get(jsonObj, "L_DPAD"));
-    controller[0].buttons.D_DPAD = 
+    controller[Control].buttons.D_DPAD =
         json_object_get_int(json_object_object_get(jsonObj, "D_DPAD"));
-    controller[0].buttons.U_DPAD = 
+    controller[Control].buttons.U_DPAD =
         json_object_get_int(json_object_object_get(jsonObj, "U_DPAD"));
-    controller[0].buttons.START_BUTTON = 
+    controller[Control].buttons.START_BUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "START_BUTTON"));
-    controller[0].buttons.Z_TRIG = 
+    controller[Control].buttons.Z_TRIG =
         json_object_get_int(json_object_object_get(jsonObj, "Z_TRIG"));
-    controller[0].buttons.B_BUTTON = 
+    controller[Control].buttons.B_BUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "B_BUTTON"));
-    controller[0].buttons.A_BUTTON = 
+    controller[Control].buttons.A_BUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "A_BUTTON"));
-    controller[0].buttons.R_CBUTTON = 
+    controller[Control].buttons.R_CBUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "R_CBUTTON"));
-    controller[0].buttons.L_CBUTTON = 
+    controller[Control].buttons.L_CBUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "L_CBUTTON"));
-    controller[0].buttons.D_CBUTTON = 
+    controller[Control].buttons.D_CBUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "D_CBUTTON"));
-    controller[0].buttons.U_CBUTTON = 
+    controller[Control].buttons.U_CBUTTON =
         json_object_get_int(json_object_object_get(jsonObj, "U_CBUTTON"));
-    controller[0].buttons.R_TRIG = 
+    controller[Control].buttons.R_TRIG =
         json_object_get_int(json_object_object_get(jsonObj, "R_TRIG"));
-    controller[0].buttons.L_TRIG = 
+    controller[Control].buttons.L_TRIG =
         json_object_get_int(json_object_object_get(jsonObj, "L_TRIG"));
-    controller[0].buttons.X_AXIS = 
+    controller[Control].buttons.X_AXIS =
         json_object_get_int(json_object_object_get(jsonObj, "X_AXIS"));
-    controller[0].buttons.Y_AXIS = 
+    controller[Control].buttons.Y_AXIS =
         json_object_get_int(json_object_object_get(jsonObj, "Y_AXIS"));
 
     close(sockfd);
