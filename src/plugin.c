@@ -11,7 +11,7 @@
 #include "controller.h"
 
 /* global data definitions */
-SController controller[1];  // 1 controller
+SController controller[4];  // 1 controller
 
 /* static data definitions */
 static void (*l_DebugCallback)(void *, int, const char *) = NULL;
