@@ -174,10 +174,10 @@ EXPORT void CALL GetKeys( int Control, BUTTONS *Keys )
   read_controller(Control);
 
 #ifdef _DEBUG
-  DebugMessage(M64MSG_VERBOSE, "Controller #%d value: 0x%8.8X", 0, *(int *)&controller[0].buttons );
+  DebugMessage(M64MSG_VERBOSE, "Controller #%d value: 0x%8.8X", 0, *(int *)&controller[Control].buttons );
 #endif
 
-  *Keys = controller[0].buttons;
+  *Keys = controller[Control].buttons;
 }
 
 /******************************************************************
